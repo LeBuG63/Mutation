@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ctime>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
@@ -18,7 +19,7 @@ public:
 
     void	setIndividu(u32_t nindividu) {
         m_effectifIndividu = nindividu;
-        
+
         m_individuID = new u32_t[m_effectifIndividu];
 
         std::cout << "ID de départ: ";
@@ -54,16 +55,25 @@ public:
     }
 
     void	processMutation() {
-        bool noWinner = true;
+        u32_t   totalGeneration = 0;
+        bool    winner = false;
 
-        while(noWinner) {
-            this->nextGeneration();
+        auto timeBegin = std::chrono::system_clock::now();
+
+        while(!winner) {
+            nextGeneration();
+            ++totalGeneration;
 
             if(verifWin()) {
-                std::cout << "Gagant: " << m_individuWinner;
-                noWinner = false;
+                winner = true;
             }
         }
+
+        auto timeEnd = std::chrono::system_clock::now();
+
+        std::chrono::duration<double> result = (timeEnd - timeBegin);
+
+        std::cout << "Mutation gagnante " << m_individuWinner << " en " << totalGeneration << " générations (" << result.count() << "s)";
     }
 
     bool    verifWin() {
