@@ -1,11 +1,25 @@
 #include <iostream>
-#include <ctime>
 #include <chrono>
-#include <cstdio>
-#include <cstdlib>
+#include <cassert>
+#include <cstdint>
 #include <vector>
+#include <random>
 
-typedef unsigned int u32_t;
+// Tutoriel pratique d'un ami, Piticroissant: http://piticroissant.wordpress.com/2014/04/19/bien-generer-les-nombres-pseudo-aleatoires/
+template <typename T>
+T random(const T& min, const T& max)
+{
+    static_assert(std::is_arithmetic<T>::value,
+            "random() needs arithmetic type");
+
+    static std::random_device rd;
+    static std::mt19937 gen{rd()};
+
+    return typename std::conditional<
+            std::is_integral<T>::value,
+            std::uniform_int_distribution<T>,
+            std::uniform_real_distribution<T>>::type{min, max}(gen);
+}
 
 class Mutation {
 public:
@@ -14,49 +28,27 @@ public:
     }
 
     ~Mutation() {
-        delete m_individuID;
-    }
-
-    void	setIndividu(u32_t nindividu) {
-        m_effectifIndividu = nindividu;
-
-        m_individuID = new u32_t[m_effectifIndividu];
-
-        std::cout << "ID de départ: ";
-
-        for(u32_t i = 0; i < m_effectifIndividu; ++i) {
-            m_individuID[i] = i;
-            std::cout << m_individuID[i] << " ";
-        }
-
-        std::cout << std::endl;
-    }
-
-    void 	nextGeneration() {
-        for(int actindividu = 0; actindividu < m_effectifIndividu; ++actindividu) {
-            int chance = rand() % m_effectifIndividu + 1;
-
-            for(int i = 0; i < chance; ++i) {
-                m_listIndividu.push_back(m_individuID[actindividu]);
-            }
-        }
-
-        for(int i = 0; i <  m_effectifIndividu; ++i) {
-            int here = rand() % m_listIndividu.size();
-
-            m_individuID[i] = m_listIndividu.at(here);
-
-            std::cout << m_individuID[i] << " ";
-        }
-
-        std::cout << std::endl;
-
+        m_individuID.clear();
         m_listIndividu.clear();
     }
 
+    void	setIndividu(uint32_t nindividu) {
+        std::cout << "ID de départ: ";
+
+        for(auto i = 0; i < nindividu; ++i) {
+            m_individuID.push_back(i);
+            std::cout << m_individuID.at(i) << " ";
+        }
+
+        assert(!m_individuID.empty());
+
+        std::cout << std::endl;
+    }
+
+
     void	processMutation() {
-        u32_t   totalGeneration = 0;
-        bool    winner = false;
+        uint32_t    totalGeneration = 1;
+        bool        winner = false;
 
         auto timeBegin = std::chrono::system_clock::now();
 
@@ -76,39 +68,59 @@ public:
         std::cout << "Mutation gagnante " << m_individuWinner << " en " << totalGeneration << " générations (" << result.count() << "s)";
     }
 
-    bool    verifWin() {
-        bool    win = false;
-        u32_t   tmp = m_individuID[0];
+private:
+    void 	nextGeneration() {
+        for(auto actindividu = 0; actindividu < m_individuID.size(); ++actindividu) {
+            int chance = random(0, static_cast<int>(m_individuID.size()));
 
-        for(int i = 1; i < m_effectifIndividu; ++i) {
-            if(m_individuID[i] == tmp) {
+            for(int i = 0; i < chance; ++i) {
+                m_listIndividu.push_back(m_individuID.at(actindividu));
+            }
+        }
+
+        for(int i = 0; i <  m_individuID.size(); ++i) {
+            int here = random(0, static_cast<int>(m_listIndividu.size() - 1));
+
+            m_individuID.at(i) = m_listIndividu.at(here);
+
+            std::cout << m_individuID.at(i) << " ";
+        }
+
+        std::cout << std::endl;
+
+        m_listIndividu.clear();
+    }
+
+    bool    	verifWin() {
+        bool    win = false;
+        auto    tmp = m_individuID.at(0);
+        auto    max = m_individuID.size();
+
+        for(int i = 1; i < max; ++i) {
+            if(m_individuID.at(i) == tmp) {
+                m_individuWinner = m_individuID.at(i);
                 win = true;
-                m_individuWinner = m_individuID[i];
             }
             else {
+                i = max;
                 win = false;
-                i = m_effectifIndividu;
             }
         }
         return win;
     }
 
 private:
-    u32_t				m_effectifIndividu;
-    u32_t 				*m_individuID;
-    u32_t               m_individuWinner;
-    std::vector<u32_t>	m_listIndividu;
+    uint32_t                m_individuWinner;
 
+    std::vector<uint32_t>   m_listIndividu;
+    std::vector<uint32_t>   m_individuID;
 };
 
 int main(int argc, char *argv[]) {
 
     Mutation mutation;
 
-    u32_t	nindividu;
-    u32_t 	ngeneration;
-
-    srand(time(NULL));
+    uint32_t	nindividu;
 
     std::cout << "Nombre d'individus: ";
     std::cin >> nindividu;
