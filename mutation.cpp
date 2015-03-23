@@ -33,7 +33,7 @@ public:
     }
 
     void	setIndividu(uint32_t nindividu) {
-        std::cout << "ID de d�part: ";
+        std::cout << "ID de dÃ©part: ";
 
         for(auto i = 0; i < nindividu; ++i) {
             m_individuID.push_back(i);
@@ -65,7 +65,7 @@ public:
 
         std::chrono::duration<double> result = (timeEnd - timeBegin);
 
-        std::cout << "Mutation gagnante " << m_individuWinner << " en " << totalGeneration << " g�n�rations (" << result.count() << "s)";
+        std::cout << "Mutation gagnante " << m_individuWinner << " en " << totalGeneration << " gÃ©nÃ©rations (" << result.count() << "s)";
     }
 
 private:
@@ -92,21 +92,18 @@ private:
     }
 
     bool    	verifWin() {
-        bool    win = false;
         auto    tmp = m_individuID.at(0);
         auto    max = m_individuID.size();
 
         for(int i = 1; i < max; ++i) {
             if(m_individuID.at(i) == tmp) {
                 m_individuWinner = m_individuID.at(i);
-                win = true;
+                return true;
             }
             else {
-                i = max;
-                win = false;
+                return false;
             }
         }
-        return win;
     }
 
 private:
